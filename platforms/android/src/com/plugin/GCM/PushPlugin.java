@@ -4,6 +4,8 @@ import android.util.Log;
 import com.google.android.gcm.GCMRegistrar;
 import org.apache.cordova.api.CallbackContext;
 import org.apache.cordova.api.CordovaPlugin;
+import org.apache.cordova.api.PluginResult;
+import org.apache.cordova.api.PluginResult.Status;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -33,10 +35,10 @@ public class PushPlugin extends CordovaPlugin {
 
   @SuppressWarnings("deprecation")
   @Override
-  public boolean execute(String action, JSONArray data, CallbackContext callbackContext)
+  public boolean execute(String action, JSONArray data, CallbackContext callbackId)
   {
 
-    boolean result = false;
+    PluginResult result = null;
 
     Log.v(ME + ":execute", "action=" + action);
 
@@ -58,22 +60,22 @@ public class PushPlugin extends CordovaPlugin {
 
         Log.v(ME + ":execute", "ECB="+gECB+" senderID="+gSenderID );
 
-        GCMRegistrar.register(cordova.getActivity(), gSenderID);
+        GCMRegistrar.register(this.cordova.getActivity(), gSenderID);
 
 
         Log.v(ME + ":execute", "GCMRegistrar.register called ");
 
-        result = true;
+        result = new PluginResult(Status.OK);
       }
       catch (JSONException e) {
 		Log.e(ME, "Got JSON Exception " + e.getMessage());
-        result = false;
+        result = new PluginResult(Status.JSON_EXCEPTION);
       }
       
       // if a notification was touched while we were completely exited, process it now
       try
       {
-    	  BufferedReader inputReader = new BufferedReader(new InputStreamReader(cordova.getActivity().getApplicationContext().openFileInput("cached_payload")));
+    	  BufferedReader inputReader = new BufferedReader(new InputStreamReader(this.cordova.getActivity().getApplicationContext().openFileInput("cached_payload")));
     	  String inputString;
     	  StringBuffer stringBuffer = new StringBuffer();                
     	  while ((inputString = inputReader.readLine()) != null)
@@ -106,17 +108,22 @@ public class PushPlugin extends CordovaPlugin {
       GCMRegistrar.unregister(this.cordova.getActivity());
       
       Log.v(ME + ":" + UNREGISTER, "GCMRegistrar.unregister called ");
-      result = true;
+      result = new PluginResult(Status.OK);
     }
     else
     {
-      result = false;
+      result = new PluginResult(Status.INVALID_ACTION);
       Log.e(ME, "Invalid action : "+action);
     }
 
-    return result;
+    sendPluginResult(result, callbackId);
+
+    return true;
   }
 
+  public static void sendPluginResult( PluginResult result, CallbackContext callbackId ){
+        callbackId.sendPluginResult(result);
+  }
 
   public static void sendJavascript( JSONObject _json )
   {
@@ -124,7 +131,7 @@ public class PushPlugin extends CordovaPlugin {
 	Log.v(ME + ":sendJavascript", _d);
 
 	if (gECB != null ) {
-		gwebView.webView.sendJavascript( _d );
+		gwebView.webView.sendJavascript(_d);
 	}
   }
 

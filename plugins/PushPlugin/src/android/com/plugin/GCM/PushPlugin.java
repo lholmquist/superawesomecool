@@ -1,20 +1,19 @@
 package com.plugin.GCM;
 
-import java.io.BufferedReader;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStreamReader;
-
+import android.util.Log;
+import com.google.android.gcm.GCMRegistrar;
+import org.apache.cordova.api.CallbackContext;
+import org.apache.cordova.api.CordovaPlugin;
+import org.apache.cordova.api.PluginResult;
+import org.apache.cordova.api.PluginResult.Status;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import android.util.Log;
-
-import org.apache.cordova.api.Plugin;
-import org.apache.cordova.api.PluginResult;
-import org.apache.cordova.api.PluginResult.Status;
-import com.google.android.gcm.*;
+import java.io.BufferedReader;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStreamReader;
 
 
 /**
@@ -22,7 +21,7 @@ import com.google.android.gcm.*;
  *
  */
 
-public class PushPlugin extends Plugin {
+public class PushPlugin extends CordovaPlugin {
 
   public static final String ME="PushPlugin";
 
@@ -30,13 +29,13 @@ public class PushPlugin extends Plugin {
   public static final String UNREGISTER="unregister";
   public static final String EXIT="exit";
 
-  public static Plugin gwebView;
+  public static CordovaPlugin gwebView;
   private static String gECB;
   private static String gSenderID;
 
   @SuppressWarnings("deprecation")
   @Override
-  public PluginResult execute(String action, JSONArray data, String callbackId)
+  public boolean execute(String action, JSONArray data, CallbackContext callbackId)
   {
 
     PluginResult result = null;
@@ -61,7 +60,7 @@ public class PushPlugin extends Plugin {
 
         Log.v(ME + ":execute", "ECB="+gECB+" senderID="+gSenderID );
 
-        GCMRegistrar.register(this.ctx.getContext(), gSenderID);
+        GCMRegistrar.register(this.cordova.getActivity(), gSenderID);
 
 
         Log.v(ME + ":execute", "GCMRegistrar.register called ");
@@ -76,7 +75,7 @@ public class PushPlugin extends Plugin {
       // if a notification was touched while we were completely exited, process it now
       try
       {
-    	  BufferedReader inputReader = new BufferedReader(new InputStreamReader(ctx.getApplicationContext().openFileInput("cached_payload")));
+    	  BufferedReader inputReader = new BufferedReader(new InputStreamReader(this.cordova.getActivity().getApplicationContext().openFileInput("cached_payload")));
     	  String inputString;
     	  StringBuffer stringBuffer = new StringBuffer();                
     	  while ((inputString = inputReader.readLine()) != null)
@@ -87,7 +86,7 @@ public class PushPlugin extends Plugin {
     	  // surface the cached payload
     	  JSONObject jsonObj = new JSONObject(stringBuffer.toString());
     	  sendJavascript(jsonObj);
-    	  ctx.getApplicationContext().getFileStreamPath("cached_payload").delete();
+    	  cordova.getActivity().getApplicationContext().getFileStreamPath("cached_payload").delete();
       }
       catch (FileNotFoundException fnf)
       {
@@ -106,7 +105,7 @@ public class PushPlugin extends Plugin {
     }
     else if (UNREGISTER.equals(action)) {
 
-      GCMRegistrar.unregister(this.ctx.getContext());
+      GCMRegistrar.unregister(this.cordova.getActivity());
       
       Log.v(ME + ":" + UNREGISTER, "GCMRegistrar.unregister called ");
       result = new PluginResult(Status.OK);
@@ -117,9 +116,14 @@ public class PushPlugin extends Plugin {
       Log.e(ME, "Invalid action : "+action);
     }
 
-    return result;
+    sendPluginResult(result, callbackId);
+
+    return true;
   }
 
+  public static void sendPluginResult( PluginResult result, CallbackContext callbackId ){
+        callbackId.sendPluginResult(result);
+  }
 
   public static void sendJavascript( JSONObject _json )
   {
@@ -127,7 +131,7 @@ public class PushPlugin extends Plugin {
 	Log.v(ME + ":sendJavascript", _d);
 
 	if (gECB != null ) {
-		gwebView.sendJavascript( _d );
+		gwebView.webView.sendJavascript(_d);
 	}
   }
 

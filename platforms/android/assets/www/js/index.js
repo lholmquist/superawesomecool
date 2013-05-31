@@ -29,10 +29,12 @@ var pushNotification,
 
             success = function (result) {
                 console.log( "success", success );
+                alert("success");
             };
 
             error = function (error) {
                 console.log(  "error", error );
+                alert( "error" );
             };
 
             //Just doing android,  so probably don't need this
@@ -83,6 +85,7 @@ function onNotificationGCM(e) {
             // you might want to play a sound to get the user's attention, throw up a dialog, etc.
             if (e.foreground)
             {
+                alert( "foreground" );
                 //$("#app-status-ul").append('<li>--INLINE NOTIFICATION--' + '</li>');
                 // if the notification contains a soundname, play it.
                 var my_media = new Media("/android_asset/www/"+e.soundname);
@@ -92,9 +95,11 @@ function onNotificationGCM(e) {
             {   // otherwise we were launched because the user touched a notification in the notification tray.
                 if (e.coldstart) {
                     //Just alert what was sent
+                    alert( "cold" );
                     //$("#app-status-ul").append('<li>--COLDSTART NOTIFICATION--' + '</li>')
                 } else {
                     //$("#app-status-ul").append('<li>--BACKGROUND NOTIFICATION--' + '</li>');
+                    alert( "back" );
                 }
             }
 
@@ -104,6 +109,7 @@ function onNotificationGCM(e) {
         break;
         case 'error':
             //$("#app-status-ul").append('<li>ERROR -> MSG:' + e.msg + '</li>');
+            alert(e.msg );
         break;
         default:
             //$("#app-status-ul").append('<li>EVENT -> Unknown, an event was received and we do not know what it is</li>');
